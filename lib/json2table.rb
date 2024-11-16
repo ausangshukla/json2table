@@ -27,7 +27,11 @@ module Json2table
     return html
   end
 
+
 def self.create_table(hash, options, level=0)
+  # Return empty string if hash is nil or empty
+  return '' if hash.nil? || (hash.respond_to?(:empty?) && hash.empty?)
+  
   html = start_table_tag(options)
   if hash.is_a?(Array)
     html += process_array(hash, options, level)
@@ -52,6 +56,9 @@ end
 
 
 def self.process_array(arr, options, level)
+  # Return empty string if arr is nil or empty
+  return '' if arr.nil? || arr.empty?
+
   html = ""
   if arr[0].is_a?(Hash)
     keys = similar_keys?(arr)
@@ -70,25 +77,28 @@ def self.process_array(arr, options, level)
   return html
 end
 
+
   # This method checks if all the individual array items
   # are hashes with similar keys.
-  def self.similar_keys?(arr)
-    previous_keys = Set.new
-    current_keys   = Set.new
-    arr.each do |hash|
-      # every item of the array should be a hash, if not return false
-      return nil if not  hash.is_a?(Hash)
-      current_keys = hash.keys.to_set
-      if previous_keys.empty?
-        previous_keys = current_keys # happens on first iteration
-      else
-        # if different keys in two distinct array elements(hashes), return false 
-        return nil if not (previous_keys^current_keys).empty?
-        previous_keys = current_keys
-      end
+ def self.similar_keys?(arr)
+  # Return nil if arr is nil or empty
+  return nil if arr.nil? || arr.empty?
+
+  previous_keys = Set.new
+  current_keys   = Set.new
+  arr.each do |hash|
+    return nil unless hash.is_a?(Hash)
+    current_keys = hash.keys.to_set
+    if previous_keys.empty?
+      previous_keys = current_keys
+    else
+      return nil unless (previous_keys ^ current_keys).empty?
+      previous_keys = current_keys
     end
-    return arr[0].keys # all array elements were hash with same keys
   end
+  return arr[0].keys
+end
+
 
   # creates a vertical table of following form for the array of hashes like this:
   #        ---------------------
