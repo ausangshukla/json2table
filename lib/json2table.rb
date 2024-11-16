@@ -27,57 +27,48 @@ module Json2table
     return html
   end
 
-  def self.create_table(hash, options)
-    html = start_table_tag(options)
-    if hash.is_a?(Array)
-      #html += "<tr><td>\n"
-      #puts ">>>> #{process_array(hash, options)}"
-      html += process_array(hash, options)
-    elsif hash.is_a?(Hash)
-      hash.each do |key, value|
-        # key goes in a column and value in second column of the same row
-        html += "<tr><th>#{to_human(key)}</th>\n"
-        html += "<td>"
-        if value.is_a?(Hash)
-          # create a row with key as heading and body
-          # as another table
-          html += create_table(value, options)
-        elsif value.is_a?(Array)
-          html += process_array(value, options)
-        else      # simple primitive data type of value (non hash, non array)
-          html += "#{value}</td></tr>\n"
-        end
-      end
-    else      # simple primitive data type of value (non hash, non array)
-      html += "<tr><td>#{hash}</td></tr>\n"
-    end
-    html += close_table_tag
-    return html
-  end
-
-  def self.process_array(arr, options)
-    html = ""
-    if arr[0].is_a?(Hash) # Array of hashes
-      keys = similar_keys?(arr)
-      if keys
-        # if elements of this array are hashes with same keys,
-        # display it as a top-down table
-        html += create_vertical_table_from_array(arr, keys, options)
+def self.create_table(hash, options, level=0)
+  html = start_table_tag(options)
+  if hash.is_a?(Array)
+    html += process_array(hash, options, level)
+  elsif hash.is_a?(Hash)
+    hash.each do |key, value|
+      html += "<tr><th>#{to_human(key)}</th>\n"
+      html += "<td>"
+      if value.is_a?(Hash)
+        html += create_table(value, options, level + 1)
+      elsif value.is_a?(Array)
+        html += process_array(value, options, level + 1)
       else
-        # non similar keys, create horizontal table
-        arr.each do |h|
-          html += create_table(h, options)
-        end
-      end
-    else
-      # array of a primitive data types eg. [1,2,3]
-      # all values can be displayed in a single column table
-      arr.each do |element|
-        html += "#{element}<br/>\n"        
+        html += "#{value}</td></tr>\n"
       end
     end
-    return html
+  else
+    html += "<tr><td>#{hash}</td></tr>\n"
   end
+  html += close_table_tag
+  return html
+end
+
+
+def self.process_array(arr, options, level)
+  html = ""
+  if arr[0].is_a?(Hash)
+    keys = similar_keys?(arr)
+    if keys
+      html += create_vertical_table_from_array(arr, keys, options, level)
+    else
+      arr.each do |h|
+        html += create_table(h, options, level)
+      end
+    end
+  else
+    arr.each do |element|
+      html += "#{element}<br/>\n"
+    end
+  end
+  return html
+end
 
   # This method checks if all the individual array items
   # are hashes with similar keys.
