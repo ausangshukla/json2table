@@ -30,7 +30,7 @@ module Json2table
   def self.create_table(hash, options)
     html = start_table_tag(options)
     if hash.is_a?(Array)
-      html += "<tr><td>\n"
+      #html += "<tr><td>\n"
       #puts ">>>> #{process_array(hash, options)}"
       html += process_array(hash, options)
     elsif hash.is_a?(Hash)
