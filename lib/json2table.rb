@@ -107,47 +107,53 @@ module Json2table
   #       | val4 | val5 | val6  |
   #       | val9 | val8 | val7  |
   #        ---------------------
-  def self.create_vertical_table_from_array(array_of_hashes, keys, options)
-    html = start_table_tag(options)
+
+  def self.create_vertical_table_from_array(array_of_hashes, keys, options, level)
+  html = start_table_tag(options)
+  
+  # Only add <thead> at the outermost level
+  if level == 0
+    html += "<thead>\n"
+  end
+
+  # Generate header row
+  html += "<tr>\n"
+  keys.each do |key|
+    html += "<th>#{to_human(key)}</th>\n"
+  end
+  html += "</tr>\n"
+
+  # Close <thead> and open <tbody> at the outermost level
+  if level == 0
+    html += "</thead>\n<tbody>\n"
+  end
+
+  # Generate data rows
+  array_of_hashes.each do |hash|
     html += "<tr>\n"
     keys.each do |key|
-      html += "<th>#{to_human(key)}</th>\n"
+      if hash[key].is_a?(Hash)
+        html += "<td>#{create_table(hash[key], options, level + 1)}</td>\n"
+      elsif hash[key].is_a?(Array)
+        html += "<td>\n"
+        html += process_array(hash[key], options, level + 1)
+        html += "</td>\n"
+      else
+        html += "<td>#{hash[key]}</td>\n"
+      end
     end
     html += "</tr>\n"
-    array_of_hashes.each do |hash|
-      html += "<tr>\n"
-      keys.each do |key|
-        if hash[key].is_a?(Hash) # another hash, create table out of it
-          html += "<td>#{create_table(hash[key], options)}</td>\n"
-        elsif hash[key].is_a?(Array)
-          html += "<td>\n"
-          html += process_array(hash[key], options)
-          html += "</td>\n"
-          # if hash[key][0].is_a?(Hash) # Array of hashes
-          #   k = similar_keys?(hash[key])
-          #   if k
-          #     # if elements of this array are hashes with same keys,
-          #     # display it as a top-down table
-          #     html += "<td>\n"
-          #     html += create_vertical_table_from_array(hash[key], k, options)
-          #     html += "</td>\n"
-          #   else
-          #     # non similar keys, create horizontal table
-          #     hash[key].each do |h|
-          #       html += create_table(h, options)
-          #     end
-          #   end
-          # else
-          #   html += "<td>#{hash[key]}</td>\n"
-          # end
-        else
-          html += "<td>#{hash[key]}</td>\n"
-        end
-      end
-      html += "</tr>\n"
-    end
-    html += self.close_table_tag
   end
+
+  # Close <tbody> at the outermost level
+  if level == 0
+    html += "</tbody>\n"
+  end
+
+  html += self.close_table_tag
+end
+
+  
   def self.start_table_tag(options)
     "<table class='#{options[:table_class]}' 
             style='#{options[:table_style]}'
